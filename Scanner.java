@@ -9,6 +9,7 @@ class Scanner {
     private int start = 0;
     private int current = 0;
     private int line = 1;
+    private int nestedBlocks = 0;
     private static final Map<String, TokenType> keywords;
 
     static {
@@ -59,7 +60,11 @@ class Scanner {
             case ';': addToken(TokenType.SEMICOLON); break;
             case '*': 
                 if(match('/')) {
-                    advance();
+                    nestedBlocks--;
+                    while(peek() != '*' && peek() != '/' && !isAtEnd()) advance();
+                    if(isAtEnd() && !isBlockComment()) {
+                        Lox.error(line, "Bad block comment");
+                    }
                 } else {
                     addToken(TokenType.STAR); 
                 }
@@ -80,7 +85,8 @@ class Scanner {
                 if(match('/')) {
                     while(peek() != '\n' && !isAtEnd()) advance();
                 } else if(match('*')) {
-                    while(peek() != '*' && peekNext() != '/' && !isAtEnd()) advance();
+                    nestedBlocks++;
+                    while((peek() != '*' && peekNext() != '/') || (peek() == '/' && peekNext() == '*') && !isAtEnd()) advance();
                 } else {
                     addToken(TokenType.SLASH);
                 }
@@ -100,8 +106,8 @@ class Scanner {
                     identifier();
                 } else {
                     Lox.error(line, "Unexpected character.");
-                    break;
                 }
+                break;
         }
 
     }
@@ -181,6 +187,10 @@ class Scanner {
     
     private boolean isDigit(char c) {
         return c >= '0' && c <= '9';
+    }
+    
+    private boolean isBlockComment() {
+        return nestedBlocks == 0;
     }
 
     private void identifier() {
