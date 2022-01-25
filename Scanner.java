@@ -57,7 +57,13 @@ class Scanner {
             case '-': addToken(TokenType.MINUS); break;
             case '+': addToken(TokenType.PLUS); break;
             case ';': addToken(TokenType.SEMICOLON); break;
-            case '*': addToken(TokenType.STAR); break; 
+            case '*': 
+                if(match('/')) {
+                    advance();
+                } else {
+                    addToken(TokenType.STAR); 
+                }
+                break; 
             case '!':
                 addToken(match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
                 break;
@@ -73,9 +79,12 @@ class Scanner {
             case '/':
                 if(match('/')) {
                     while(peek() != '\n' && !isAtEnd()) advance();
+                } else if(match('*')) {
+                    while(peek() != '*' && peekNext() != '/' && !isAtEnd()) advance();
                 } else {
                     addToken(TokenType.SLASH);
                 }
+                break;
             case '"': string(); break;
             case ' ':
             case '\r':
